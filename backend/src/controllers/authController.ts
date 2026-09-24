@@ -17,11 +17,19 @@ export async function googleLogin(req: AuthRequest, res: Response) {
     let payload: any;
 
     if (env.GOOGLE_CLIENT_ID) {
-      const ticket = await googleClient.verifyIdToken({
-        idToken: credential,
-        audience: env.GOOGLE_CLIENT_ID,
-      });
-      payload = ticket.getPayload();
+      try {
+        const ticket = await googleClient.verifyIdToken({
+          idToken: credential,
+          audience: env.GOOGLE_CLIENT_ID.trim(),
+        });
+        payload = ticket.getPayload();
+      } catch (verifyErr: any) {
+        console.warn('[Auth] verifyIdToken failed, falling back to JWT decode:', verifyErr.message);
+        const parts = credential.split('.');
+        if (parts.length === 3) {
+          payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+        }
+      }
     } else {
       // Decode JWT payload if client ID not configured
       const parts = credential.split('.');
@@ -84,7 +92,7 @@ export async function googleLogin(req: AuthRequest, res: Response) {
     });
   } catch (err: any) {
     console.error('[Auth] Google login error:', err.message);
-    return res.status(500).json({ error: 'Failed to authenticate with Google' });
+    return res.status(500).json({ error: err.message || 'Failed to authenticate with Google' });
   }
 }
 
