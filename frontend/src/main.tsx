@@ -9,7 +9,7 @@ import App from './App';
 
 const googleClientId =
   import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-  '621234567890-mockclientidforreachinboxscheduler.apps.googleusercontent.com';
+  '316105007854-3h9vebrg399dvjt1i263ueqj6tb4lu0k.apps.googleusercontent.com';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
