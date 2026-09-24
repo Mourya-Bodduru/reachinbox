@@ -222,4 +222,3 @@ The script runs 7 checks:
 2. **Rescheduling with Jitter**: When multiple jobs hit the rate limit and are rescheduled to the next hour, a random jitter offset is applied to prevent all delayed jobs from waking up simultaneously.
 3. **Graceful Search Fallback**: If Elasticsearch is not running, search requests fall back to SQL `LIKE` queries against MySQL so the dashboard remains completely usable in lightweight local setups.
 4. **Idempotent Queue Synchronization**: Queue synchronization uses deterministic IDs based on the database primary key, preventing duplicate jobs if the worker restarts multiple times.
-# reachinbox
