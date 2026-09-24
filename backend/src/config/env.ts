@@ -9,6 +9,7 @@ export const env = {
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
   DATABASE_URL: process.env.DATABASE_URL || 'mysql://root:@localhost:3306/reachinbox_db',
   
+  REDIS_URL: process.env.REDIS_URL || '',
   REDIS_HOST: process.env.REDIS_HOST || 'localhost',
   REDIS_PORT: parseInt(process.env.REDIS_PORT || '6379', 10),
   REDIS_PASSWORD: process.env.REDIS_PASSWORD || undefined,
