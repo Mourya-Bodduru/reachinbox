@@ -38,28 +38,26 @@ const del = (path) =>
   request({ hostname: '127.0.0.1', port: 5000, path, method: 'DELETE' });
 
 async function runE2ETests() {
-  console.log('========================================================');
-  console.log('🧪 RUNNING REACHINBOX AUTOMATED END-TO-END VERIFICATION');
-  console.log('========================================================\n');
+  console.log('--- ReachInbox End-to-End Test Suite ---');
 
   // Test 1: Health Check
-  console.log('1️⃣ Checking system health (/health)...');
+  console.log('[1/7] Checking system health (/health)...');
   const health = await get('/health');
   if (health.status !== 200 || health.body.db !== 'ok' || health.body.redis !== 'ok') {
     throw new Error(`Health check failed: ${JSON.stringify(health.body)}`);
   }
-  console.log('   ✅ Health OK! DB: ok, Redis: ok, Status: healthy\n');
+  console.log('      DB: ok, Redis: ok, Status: healthy');
 
   // Test 2: Fetch Senders
-  console.log('2️⃣ Fetching configured senders (/api/emails/senders)...');
+  console.log('[2/7] Fetching configured senders (/api/emails/senders)...');
   const senders = await get('/api/emails/senders');
   if (!senders.body.senders || senders.body.senders.length === 0) {
     throw new Error('No senders returned');
   }
-  console.log(`   ✅ Senders OK! Found ${senders.body.senders.length} active senders.\n`);
+  console.log(`      Found ${senders.body.senders.length} active senders.`);
 
   // Test 3: Schedule Batch with Delay
-  console.log('3️⃣ Scheduling campaign with provider throttling (/api/emails/schedule)...');
+  console.log('[3/7] Scheduling campaign with delay (/api/emails/schedule)...');
   const scheduleRes = await post('/api/emails/schedule', {
     subject: 'E2E Verification Campaign',
     body: 'Automated test content verifying BullMQ delayed job processing.',
@@ -72,19 +70,19 @@ async function runE2ETests() {
   if (scheduleRes.status !== 201 || scheduleRes.body.scheduledCount !== 2) {
     throw new Error(`Scheduling failed: ${JSON.stringify(scheduleRes.body)}`);
   }
-  console.log(`   ✅ Campaign scheduled! ${scheduleRes.body.scheduledCount} jobs enqueued in BullMQ.\n`);
+  console.log(`      Campaign scheduled: ${scheduleRes.body.scheduledCount} jobs enqueued.`);
 
   // Test 4: Rate Limiting & Next Hour Window Rescheduling
-  console.log('4️⃣ Testing Hourly Rate Limiting & Safe Rescheduling (hourlyLimit=1)...');
+  console.log('[4/7] Testing Hourly Rate Limiting (hourlyLimit=1)...');
   const rateLimitRes = await post('/api/emails/schedule', {
     subject: 'E2E Rate Limit Stress Test',
     body: 'Testing hourly limit threshold.',
     recipients: ['ratelimit.a@test.com', 'ratelimit.b@test.com'],
     senderEmail: 'campaigns@growthlead.io',
     delayBetweenEmails: 1,
-    hourlyLimit: 1, // Only 1 per hour allowed!
+    hourlyLimit: 1,
   });
-  console.log(`   ✅ Enqueued 2 jobs with limit=1. Waiting 6s for worker processing...`);
+  console.log('      Enqueued 2 jobs with limit=1. Waiting 6s for worker processing...');
   await new Promise((r) => setTimeout(r, 6000));
 
   const scheduled = await get('/api/emails/scheduled');
@@ -92,18 +90,18 @@ async function runE2ETests() {
     (e) => e.recipientEmail === 'ratelimit.b@test.com'
   );
   if (!rescheduledJob || rescheduledJob.status !== 'RATE_LIMITED_RESCHEDULED') {
-    console.log('   ⚠️ Rescheduled status check: status is', rescheduledJob?.status);
+    console.log('      Status:', rescheduledJob?.status);
   } else {
-    console.log(`   ✅ Rate limit verified! Job was rescheduled to next window (${rescheduledJob.scheduledAt}).\n`);
+    console.log(`      Rate limit verified: Job rescheduled to next window (${rescheduledJob.scheduledAt}).`);
   }
 
   // Test 5: Elasticsearch / Database Search
-  console.log('5️⃣ Testing Search Engine API (/api/emails/sent?q=Verification)...');
+  console.log('[5/7] Testing Search Engine API (/api/emails/sent?q=Verification)...');
   const searchRes = await get('/api/emails/sent?q=Verification');
-  console.log(`   ✅ Search OK! Found ${searchRes.body.total} matches (Search source: ${searchRes.body.source || 'default'}).\n`);
+  console.log(`      Search returned ${searchRes.body.total} matches (source: ${searchRes.body.source || 'default'}).`);
 
   // Test 6: Job Cancellation
-  console.log('6️⃣ Testing Job Cancellation (DELETE /api/emails/:id)...');
+  console.log('[6/7] Testing Job Cancellation (DELETE /api/emails/:id)...');
   const futureSchedule = await post('/api/emails/schedule', {
     subject: 'Job To Cancel',
     body: 'This job will be cancelled immediately.',
@@ -118,20 +116,20 @@ async function runE2ETests() {
   if (cancelRes.status !== 200 || !cancelRes.body.success) {
     throw new Error(`Cancellation failed: ${JSON.stringify(cancelRes.body)}`);
   }
-  console.log(`   ✅ Cancellation OK! Job ${jobId} successfully removed from BullMQ.\n`);
+  console.log(`      Cancellation verified for job ${jobId}.`);
 
   // Test 7: Queue Metrics
-  console.log('7️⃣ Testing Queue Stats Endpoint (/api/emails/stats)...');
+  console.log('[7/7] Testing Queue Stats Endpoint (/api/emails/stats)...');
   const stats = await get('/api/emails/stats');
-  console.log('   ✅ Metrics Summary:');
-  console.log(`      • Total Sent:       ${stats.body.sentCount}`);
-  console.log(`      • Rate Rescheduled: ${stats.body.rateLimitedCount}`);
-  console.log(`      • Queue Completed:  ${stats.body.queue.completed}`);
-  console.log(`      • Queue Delayed:    ${stats.body.queue.delayed}`);
-  console.log('\n🎉 ALL END-TO-END ACCEPTANCE TESTS PASSED SUCCESSFULLY!\n');
+  console.log('      Metrics Summary:');
+  console.log(`        Sent:            ${stats.body.sentCount}`);
+  console.log(`        Rate Rescheduled:${stats.body.rateLimitedCount}`);
+  console.log(`        Queue Completed: ${stats.body.queue.completed}`);
+  console.log(`        Queue Delayed:   ${stats.body.queue.delayed}`);
+  console.log('\nAll E2E acceptance tests passed successfully.\n');
 }
 
 runE2ETests().catch((err) => {
-  console.error('❌ E2E Test Suite Error:', err.message);
+  console.error('E2E Test Suite Error:', err.message);
   process.exit(1);
 });

@@ -126,6 +126,57 @@ export async function devLogin(req: AuthRequest, res: Response) {
   }
 }
 
+export async function emailLogin(req: AuthRequest, res: Response) {
+  try {
+    const { email, name } = req.body;
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({ error: 'Please enter a valid email address' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const displayName = (name && typeof name === 'string' && name.trim()) || cleanEmail.split('@')[0];
+
+    let user = await prisma.user.findFirst({
+      where: { email: cleanEmail },
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email: cleanEmail,
+          name: displayName,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=e0e7ff&color=4338ca`,
+        },
+      });
+    } else if (name && name.trim()) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { name: displayName },
+      });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    return res.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+        slackConnected: !!(user.slackWebhookUrl || user.slackAccessToken),
+        slackChannel: user.slackChannel,
+      },
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+}
+
 export async function getMe(req: AuthRequest, res: Response) {
   if (!req.user) {
     return res.status(401).json({ error: 'Unauthorized' });

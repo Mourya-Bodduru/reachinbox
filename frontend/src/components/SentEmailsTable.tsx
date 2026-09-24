@@ -52,17 +52,16 @@ export const SentEmailsTable: React.FC<SentEmailsTableProps> = ({
 
   return (
     <div className="card border-0 bg-transparent">
-      {/* Controls Bar */}
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
-        <div className="d-flex align-items-center gap-2 flex-grow-1" style={{ maxWidth: '420px' }}>
+        <div className="d-flex align-items-center gap-2 flex-grow-1" style={{ maxWidth: '380px' }}>
           <div className="input-group">
-            <span className="input-group-text bg-dark border-secondary-subtle text-secondary">
+            <span className="input-group-text bg-white border-end-0 text-muted">
               <i className="bi bi-search"></i>
             </span>
             <input
               type="text"
-              className="form-control"
-              placeholder="Search sent emails (Elasticsearch)..."
+              className="form-control border-start-0 ps-0"
+              placeholder="Search sent emails..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
             />
@@ -76,7 +75,7 @@ export const SentEmailsTable: React.FC<SentEmailsTableProps> = ({
             value={selectedSender}
             onChange={(e) => onSenderChange(e.target.value)}
           >
-            <option value="">All Sender Identities</option>
+            <option value="">All Senders</option>
             {senders.map((s) => (
               <option key={s.id} value={s.email}>
                 {s.name}
@@ -87,7 +86,7 @@ export const SentEmailsTable: React.FC<SentEmailsTableProps> = ({
           <button
             onClick={onRefresh}
             className="btn btn-sm btn-secondary-custom d-flex align-items-center gap-1"
-            title="Refresh Table"
+            title="Refresh"
           >
             <i className={`bi bi-arrow-clockwise ${loading ? 'spin' : ''}`}></i>
             <span className="d-none d-sm-inline">Refresh</span>
@@ -95,18 +94,17 @@ export const SentEmailsTable: React.FC<SentEmailsTableProps> = ({
         </div>
       </div>
 
-      {/* Table Container */}
-      <div className="custom-table-container shadow-sm">
+      <div className="custom-table-container">
         <div className="table-responsive">
           <table className="table custom-table align-middle">
             <thead>
               <tr>
-                <th>Recipient Lead</th>
-                <th>Subject Line</th>
-                <th>Sender Identity</th>
-                <th>Sent At</th>
-                <th>Delivery Status</th>
-                <th className="text-end">Ethereal Preview</th>
+                <th>Recipient</th>
+                <th>Subject</th>
+                <th>Sender</th>
+                <th>Dispatched At</th>
+                <th>Status</th>
+                <th className="text-end">Preview</th>
               </tr>
             </thead>
             <tbody>
@@ -114,18 +112,18 @@ export const SentEmailsTable: React.FC<SentEmailsTableProps> = ({
                 <tr>
                   <td colSpan={6} className="text-center py-5">
                     <div className="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
-                    <span className="text-secondary small">Loading dispatched messages...</span>
+                    <span className="text-muted small">Loading sent history...</span>
                   </td>
                 </tr>
               ) : emails.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center py-5">
-                    <div className="text-secondary mb-2">
-                      <i className="bi bi-inbox fs-1 d-block opacity-50 mb-2"></i>
-                      <span className="fw-semibold">No sent emails recorded yet</span>
+                    <div className="text-muted mb-1">
+                      <i className="bi bi-inbox fs-2 d-block opacity-50 mb-2"></i>
+                      <span className="fw-semibold">No sent emails yet</span>
                     </div>
-                    <div className="small text-secondary">
-                      Once scheduled emails are processed by BullMQ workers and dispatched via Ethereal SMTP, they will appear here.
+                    <div className="small text-muted">
+                      Processed jobs sent via Ethereal SMTP will be listed here.
                     </div>
                   </td>
                 </tr>
@@ -141,28 +139,26 @@ export const SentEmailsTable: React.FC<SentEmailsTableProps> = ({
                       <td>
                         <div className="d-flex align-items-center gap-2">
                           <i className="bi bi-check-circle text-success small"></i>
-                          <span className="fw-semibold text-white">{job.recipientEmail}</span>
+                          <span className="fw-medium text-dark">{job.recipientEmail}</span>
                         </div>
                       </td>
                       <td>
-                        <div className="text-truncate" style={{ maxWidth: '300px' }} title={job.subject}>
+                        <div className="text-truncate text-dark" style={{ maxWidth: '280px' }} title={job.subject}>
                           {job.subject}
                         </div>
                         {job.errorMessage && (
                           <div className="text-danger small mt-1" style={{ fontSize: '0.75rem' }}>
-                            <i className="bi bi-exclamation-circle me-1"></i>
                             {job.errorMessage}
                           </div>
                         )}
                       </td>
                       <td>
-                        <span className="badge bg-secondary-subtle text-secondary small font-monospace">
+                        <span className="badge bg-light text-secondary border small font-monospace">
                           {job.senderEmail}
                         </span>
                       </td>
                       <td>
-                        <div className="small text-white">
-                          <i className="bi bi-send text-secondary me-1"></i>
+                        <div className="small text-muted">
                           {formattedDate}
                         </div>
                       </td>
@@ -173,14 +169,13 @@ export const SentEmailsTable: React.FC<SentEmailsTableProps> = ({
                             href={job.etherealPreviewUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1 py-1 px-2"
-                            title="Open email viewer on Ethereal Email"
+                            className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 py-1 px-2"
                           >
                             <i className="bi bi-box-arrow-up-right"></i>
                             <span className="small">View Email</span>
                           </a>
                         ) : (
-                          <span className="text-secondary small italic">Preview unavailable</span>
+                          <span className="text-muted small">—</span>
                         )}
                       </td>
                     </tr>
@@ -191,10 +186,9 @@ export const SentEmailsTable: React.FC<SentEmailsTableProps> = ({
           </table>
         </div>
 
-        {/* Footer */}
-        <div className="d-flex justify-content-between align-items-center px-4 py-3 border-top border-secondary-subtle bg-dark-subtle">
-          <div className="small text-secondary">
-            Showing <strong>{emails.length}</strong> of <strong>{total}</strong> sent emails
+        <div className="d-flex justify-content-between align-items-center px-4 py-3 border-top bg-light">
+          <div className="small text-muted">
+            Showing <strong>{emails.length}</strong> of <strong>{total}</strong> emails
           </div>
           {totalPages > 1 && (
             <div className="d-flex gap-1">
@@ -205,7 +199,7 @@ export const SentEmailsTable: React.FC<SentEmailsTableProps> = ({
               >
                 Previous
               </button>
-              <span className="btn btn-sm btn-outline-secondary disabled border-0 text-white">
+              <span className="btn btn-sm btn-light disabled border text-dark">
                 Page {page} of {totalPages}
               </span>
               <button

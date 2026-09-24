@@ -37,33 +37,8 @@ export async function authenticate(
         };
         return next();
       }
-    } catch (err) {
-      // Invalid token, fall through
-    }
+    } catch (err) {}
   }
 
-  // Fallback for dev / unauthenticated requests: use or create demo user
-  try {
-    let demoUser = await prisma.user.findFirst({
-      where: { email: 'demo@reachinbox.ai' },
-    });
-    if (!demoUser) {
-      demoUser = await prisma.user.create({
-        data: {
-          email: 'demo@reachinbox.ai',
-          name: 'Demo Admin',
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        },
-      });
-    }
-    req.user = {
-      id: demoUser.id,
-      email: demoUser.email,
-      name: demoUser.name,
-      avatar: demoUser.avatar,
-    };
-    return next();
-  } catch (e) {
-    return next();
-  }
+  return next();
 }

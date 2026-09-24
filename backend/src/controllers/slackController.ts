@@ -96,21 +96,21 @@ export async function testNotification(req: AuthRequest, res: Response) {
     const userId = req.user?.id;
     const result = await sendSlackMessage(
       userId,
-      '🧪 ReachInbox Test Notification: Your Slack integration is active and working properly!',
+      'ReachInbox Test Notification: Slack integration is active and working properly.',
       [
         {
           type: 'header',
           text: {
             type: 'plain_text',
-            text: '⚡ ReachInbox Scheduler • Slack Connected',
-            emoji: true,
+            text: 'ReachInbox Scheduler - Slack Connected',
+            emoji: false,
           },
         },
         {
           type: 'section',
           text: {
             type: 'mrkdwn',
-            text: '✅ *Success!* Slack notifications are now configured. You will receive live alerts whenever an email sender hits the hourly rate limit.',
+            text: 'Slack notifications are configured. Rate limit alerts will be posted here.',
           },
         },
         {
@@ -118,7 +118,7 @@ export async function testNotification(req: AuthRequest, res: Response) {
           elements: [
             {
               type: 'mrkdwn',
-              text: `Delivered to user: *${req.user?.email}* • ReachInbox Queue Engine`,
+              text: `Configured by: ${req.user?.email}`,
             },
           ],
         },

@@ -16,7 +16,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Auth APIs
 export async function googleLoginApi(credential: string): Promise<{ token: string; user: User }> {
   const res = await api.post('/auth/google', { credential });
   return res.data;
@@ -27,12 +26,16 @@ export async function devLoginApi(): Promise<{ token: string; user: User }> {
   return res.data;
 }
 
+export async function emailLoginApi(email: string, name?: string): Promise<{ token: string; user: User }> {
+  const res = await api.post('/auth/login', { email, name });
+  return res.data;
+}
+
 export async function getMeApi(): Promise<{ user: User }> {
   const res = await api.get('/auth/me');
   return res.data;
 }
 
-// Email APIs
 export async function scheduleEmailsApi(payload: SchedulePayload) {
   const res = await api.post('/emails/schedule', payload);
   return res.data;
@@ -73,7 +76,6 @@ export async function cancelEmailApi(id: string) {
   return res.data;
 }
 
-// Slack APIs
 export async function getSlackAuthorizeUrlApi(): Promise<{ url: string }> {
   const res = await api.get('/slack/authorize');
   return res.data;

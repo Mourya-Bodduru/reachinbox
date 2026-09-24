@@ -5,7 +5,7 @@ import { prisma } from '../config/db';
 
 export function getSlackAuthorizeUrl(userId: string): string {
   if (!env.SLACK_CLIENT_ID) {
-    throw new Error('SLACK_CLIENT_ID is not configured in backend .env');
+    throw new Error('SLACK_CLIENT_ID is not configured');
   }
 
   const scopes = ['incoming-webhook', 'chat:write'];
@@ -42,7 +42,7 @@ export async function handleOAuthCallback(code: string, userId: string) {
   const channel = data.incoming_webhook?.channel || data.incoming_webhook?.configuration_url;
   const accessToken = data.access_token;
 
-  const updatedUser = await prisma.user.update({
+  return prisma.user.update({
     where: { id: userId },
     data: {
       slackWebhookUrl: webhookUrl,
@@ -50,8 +50,6 @@ export async function handleOAuthCallback(code: string, userId: string) {
       slackChannel: channel,
     },
   });
-
-  return updatedUser;
 }
 
 export async function disconnectSlack(userId: string) {
@@ -66,13 +64,11 @@ export async function disconnectSlack(userId: string) {
 }
 
 export async function sendSlackMessage(userId: string | null | undefined, text: string, blocks?: any[]) {
-  // Find user to notify
   let user = null;
   if (userId) {
     user = await prisma.user.findUnique({ where: { id: userId } });
   }
   if (!user) {
-    // Fallback to first user with Slack connected
     user = await prisma.user.findFirst({
       where: {
         OR: [
@@ -84,14 +80,12 @@ export async function sendSlackMessage(userId: string | null | undefined, text: 
   }
 
   if (!user || (!user.slackWebhookUrl && !user.slackAccessToken)) {
-    console.log('[Slack] No connected Slack workspace found. Skipping notification gracefully.');
     return { sent: false, reason: 'No Slack workspace connected' };
   }
 
   try {
     if (user.slackWebhookUrl) {
       await axios.post(user.slackWebhookUrl, { text, blocks });
-      console.log(`[Slack] Sent notification via incoming webhook to ${user.slackChannel || 'channel'}`);
       return { sent: true, method: 'webhook' };
     } else if (user.slackAccessToken && user.slackChannel) {
       const client = new WebClient(user.slackAccessToken);
@@ -100,15 +94,14 @@ export async function sendSlackMessage(userId: string | null | undefined, text: 
         text,
         blocks,
       });
-      console.log(`[Slack] Sent notification via WebClient to ${user.slackChannel}`);
       return { sent: true, method: 'webclient' };
     }
   } catch (err: any) {
-    console.error('[Slack] Failed to deliver notification:', err.message);
+    console.error('Failed to deliver Slack notification:', err.message);
     return { sent: false, error: err.message };
   }
 
-  return { sent: false, reason: 'No valid channel or webhook' };
+  return { sent: false, reason: 'No valid destination' };
 }
 
 export async function sendRateLimitAlert(params: {
@@ -121,25 +114,23 @@ export async function sendRateLimitAlert(params: {
   const formattedNextTime = params.nextWindowTime.toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
   });
 
-  const text = `🚨 Rate Limit Alert: Sender ${params.senderEmail} reached ${params.hourlyLimit} emails/hr. Next window: ${formattedNextTime}`;
+  const text = `Rate Limit Reached: Sender ${params.senderEmail} hit ${params.hourlyLimit} emails/hr. Next window opens at ${formattedNextTime}`;
 
   const blocks = [
     {
       type: 'header',
       text: {
         type: 'plain_text',
-        text: '🚨 ReachInbox Scheduler • Rate Limit Exceeded',
-        emoji: true,
+        text: 'Hourly Rate Limit Exceeded',
       },
     },
     {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `*Sender:* \`${params.senderEmail}\`\n*Limit:* *${params.hourlyLimit} emails / hour* (Current count: *${params.currentCount}*)\n*Status:* Jobs automatically delayed & rescheduled into the next hour window.`,
+        text: `*Sender:* \`${params.senderEmail}\`\n*Limit:* ${params.hourlyLimit} emails/hr (attempt: ${params.currentCount})\n*Action:* Remaining emails have been delayed to the next window.`,
       },
     },
     {
@@ -147,20 +138,11 @@ export async function sendRateLimitAlert(params: {
       fields: [
         {
           type: 'mrkdwn',
-          text: `*Next Execution Window:*\n🕒 ${formattedNextTime}`,
+          text: `*Next Execution:*\n${formattedNextTime}`,
         },
         {
           type: 'mrkdwn',
-          text: '*Action Taken:*\n✅ Order Preserved (No emails dropped)',
-        },
-      ],
-    },
-    {
-      type: 'context',
-      elements: [
-        {
-          type: 'mrkdwn',
-          text: '⚡ ReachInbox Distributed Job Scheduler • Safe Provider Throttling Active',
+          text: `*Status:*\nRescheduled`,
         },
       ],
     },

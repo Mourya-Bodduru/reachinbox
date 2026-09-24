@@ -5,7 +5,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding initial data...');
 
-  // Default senders
   const senders = [
     {
       email: 'alex.sales@reachinbox.ai',
@@ -32,7 +31,6 @@ async function main() {
     });
   }
 
-  // Demo user
   await prisma.user.upsert({
     where: { email: 'demo@reachinbox.ai' },
     update: {},

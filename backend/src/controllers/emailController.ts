@@ -18,7 +18,6 @@ export async function scheduleEmails(req: AuthRequest, res: Response) {
       hourlyLimit: rawLimit,
     } = req.body;
 
-    // Validation
     if (!subject || !subject.trim()) {
       return res.status(400).json({ error: 'Subject is required' });
     }
@@ -26,7 +25,7 @@ export async function scheduleEmails(req: AuthRequest, res: Response) {
       return res.status(400).json({ error: 'Email body is required' });
     }
     if (!Array.isArray(recipients) || recipients.length === 0) {
-      return res.status(400).json({ error: 'At least one recipient email is required' });
+      return res.status(400).json({ error: 'At least one recipient is required' });
     }
     if (!senderEmail || !senderEmail.trim()) {
       return res.status(400).json({ error: 'Sender email is required' });
@@ -50,18 +49,15 @@ export async function scheduleEmails(req: AuthRequest, res: Response) {
 
     const scheduledJobs = [];
 
-    // Stagger emails based on delayBetweenEmails
     for (let i = 0; i < recipients.length; i++) {
       const recipient = recipients[i].trim();
       if (!recipient || !recipient.includes('@')) continue;
 
-      // Stagger each recipient by delaySeconds
       const targetTime = baseScheduledTime + i * delaySeconds * 1000;
       const scheduledDate = new Date(targetTime);
       const delayMs = Math.max(0, targetTime - now);
       const emailJobId = uuidv4();
 
-      // 1. Create DB record
       const emailRecord = await prisma.emailJob.create({
         data: {
           id: emailJobId,
@@ -79,7 +75,6 @@ export async function scheduleEmails(req: AuthRequest, res: Response) {
         },
       });
 
-      // 2. Index in Elasticsearch
       await indexEmail({
         id: emailRecord.id,
         userId: emailRecord.userId,
@@ -93,7 +88,6 @@ export async function scheduleEmails(req: AuthRequest, res: Response) {
         updatedAt: emailRecord.updatedAt,
       });
 
-      // 3. Enqueue in BullMQ with calculated delay
       await enqueueEmailJob(
         {
           emailJobId: emailRecord.id,
@@ -122,7 +116,7 @@ export async function scheduleEmails(req: AuthRequest, res: Response) {
       jobs: scheduledJobs,
     });
   } catch (err: any) {
-    console.error('[Emails] Error scheduling email batch:', err.message);
+    console.error('Error scheduling email batch:', err.message);
     return res.status(500).json({ error: err.message });
   }
 }
@@ -134,7 +128,6 @@ export async function getScheduledEmails(req: AuthRequest, res: Response) {
     const query = req.query.q ? String(req.query.q) : undefined;
     const senderEmail = req.query.senderEmail ? String(req.query.senderEmail) : undefined;
 
-    // Search via Elasticsearch (with fallback)
     const result = await searchEmails({
       query,
       senderEmail,
@@ -142,7 +135,6 @@ export async function getScheduledEmails(req: AuthRequest, res: Response) {
       limit,
     });
 
-    // Filter to scheduled statuses if using DB fallback
     if (result.source === 'database_fallback') {
       const where: any = {
         status: { in: ['SCHEDULED', 'RATE_LIMITED_RESCHEDULED', 'QUEUED'] },
@@ -178,7 +170,6 @@ export async function getScheduledEmails(req: AuthRequest, res: Response) {
       });
     }
 
-    // If ES result, filter scheduled
     const filteredEmails = result.emails.filter((e: any) =>
       ['SCHEDULED', 'RATE_LIMITED_RESCHEDULED', 'QUEUED'].includes(e.status)
     );
@@ -246,13 +237,11 @@ export async function cancelEmail(req: AuthRequest, res: Response) {
     }
 
     if (['SENT', 'FAILED'].includes(emailJob.status)) {
-      return res.status(400).json({ error: `Cannot cancel email in status ${emailJob.status}` });
+      return res.status(400).json({ error: `Cannot cancel email with status ${emailJob.status}` });
     }
 
-    // Remove from BullMQ
     await removeJobFromQueue(id);
 
-    // Update DB
     const updated = await prisma.emailJob.update({
       where: { id },
       data: { status: 'CANCELLED' },

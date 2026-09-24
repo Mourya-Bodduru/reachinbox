@@ -16,17 +16,15 @@ import apiRouter from './routes/api';
 async function bootstrap() {
   const app = express();
 
-  // Middleware
   app.use(
     cors({
-      origin: [env.FRONTEND_URL, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+      origin: [env.FRONTEND_URL, 'http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174'],
       credentials: true,
     })
   );
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
 
-  // Bull Board (Live Queue Dashboard)
   const serverAdapter = new ExpressAdapter();
   serverAdapter.setBasePath('/admin/queues');
 
@@ -36,12 +34,9 @@ async function bootstrap() {
   });
 
   app.use('/admin/queues', serverAdapter.getRouter());
-
-  // API Routes
   app.use('/api', apiRouter);
 
-  // Health check endpoint
-  app.get('/health', async (req, res) => {
+  app.get('/health', async (_req, res) => {
     let dbStatus = 'ok';
     let redisStatus = 'ok';
 
@@ -62,38 +57,24 @@ async function bootstrap() {
       db: dbStatus,
       redis: redisStatus,
       timestamp: new Date().toISOString(),
-      version: '1.0.0',
     });
   });
 
-  // Start Express server
   const server = app.listen(env.PORT, async () => {
-    console.log(`====================================================`);
-    console.log(`🚀 ReachInbox Scheduler Backend running on port ${env.PORT}`);
-    console.log(`📊 BullMQ Dashboard: http://localhost:${env.PORT}/admin/queues`);
-    console.log(`🌐 API Endpoints:    http://localhost:${env.PORT}/api`);
-    console.log(`====================================================`);
+    console.log(`Backend server listening on port ${env.PORT}`);
+    console.log(`Queue UI: http://localhost:${env.PORT}/admin/queues`);
 
-    // 1. Initialize Elasticsearch index
     await initElasticsearch();
-
-    // 2. Initialize BullMQ Worker
     const worker = createEmailWorker();
-
-    // 3. Run Queue Recovery / Startup Sync (Persistence across server restarts)
     await syncQueueOnStartup();
 
-    // Graceful shutdown
     const shutdown = async (signal: string) => {
-      console.log(`\n[Server] Received ${signal}. Starting graceful shutdown...`);
-      server.close(() => {
-        console.log('[Server] HTTP server closed.');
-      });
+      console.log(`Shutting down (${signal})...`);
+      server.close();
       await worker.close();
       await emailQueue.close();
       await redisClient.quit();
       await prisma.$disconnect();
-      console.log('[Server] Graceful shutdown completed.');
       process.exit(0);
     };
 
@@ -103,6 +84,6 @@ async function bootstrap() {
 }
 
 bootstrap().catch((err) => {
-  console.error('[Server] Fatal bootstrap error:', err);
+  console.error('Failed to start server:', err);
   process.exit(1);
 });

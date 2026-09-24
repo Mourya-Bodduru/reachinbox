@@ -35,7 +35,7 @@ export const ScheduledEmailsTable: React.FC<ScheduledEmailsTableProps> = ({
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const handleCancel = async (id: string) => {
-    if (!window.confirm('Are you sure you want to cancel this scheduled email?')) return;
+    if (!window.confirm('Cancel this scheduled email?')) return;
     try {
       setCancellingId(id);
       await cancelEmailApi(id);
@@ -57,8 +57,8 @@ export const ScheduledEmailsTable: React.FC<ScheduledEmailsTableProps> = ({
         );
       case 'RATE_LIMITED_RESCHEDULED':
         return (
-          <span className="badge-status badge-rescheduled" title="Hourly limit exceeded; rescheduled into next hour window">
-            <i className="bi bi-hourglass-split"></i> Rescheduled (Rate Limit)
+          <span className="badge-status badge-rescheduled">
+            <i className="bi bi-hourglass-split"></i> Rescheduled
           </span>
         );
       case 'QUEUED':
@@ -80,17 +80,16 @@ export const ScheduledEmailsTable: React.FC<ScheduledEmailsTableProps> = ({
 
   return (
     <div className="card border-0 bg-transparent">
-      {/* Controls Bar: Search & Filter */}
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
-        <div className="d-flex align-items-center gap-2 flex-grow-1" style={{ maxWidth: '420px' }}>
+        <div className="d-flex align-items-center gap-2 flex-grow-1" style={{ maxWidth: '380px' }}>
           <div className="input-group">
-            <span className="input-group-text bg-dark border-secondary-subtle text-secondary">
+            <span className="input-group-text bg-white border-end-0 text-muted">
               <i className="bi bi-search"></i>
             </span>
             <input
               type="text"
-              className="form-control"
-              placeholder="Search by recipient, subject, or content (Elasticsearch)..."
+              className="form-control border-start-0 ps-0"
+              placeholder="Search emails..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
             />
@@ -98,14 +97,13 @@ export const ScheduledEmailsTable: React.FC<ScheduledEmailsTableProps> = ({
         </div>
 
         <div className="d-flex align-items-center gap-2">
-          {/* Sender Filter */}
           <select
             className="form-select form-select-sm"
             style={{ width: 'auto' }}
             value={selectedSender}
             onChange={(e) => onSenderChange(e.target.value)}
           >
-            <option value="">All Sender Identities</option>
+            <option value="">All Senders</option>
             {senders.map((s) => (
               <option key={s.id} value={s.email}>
                 {s.name}
@@ -113,11 +111,10 @@ export const ScheduledEmailsTable: React.FC<ScheduledEmailsTableProps> = ({
             ))}
           </select>
 
-          {/* Refresh Button */}
           <button
             onClick={onRefresh}
             className="btn btn-sm btn-secondary-custom d-flex align-items-center gap-1"
-            title="Refresh Table"
+            title="Refresh"
           >
             <i className={`bi bi-arrow-clockwise ${loading ? 'spin' : ''}`}></i>
             <span className="d-none d-sm-inline">Refresh</span>
@@ -125,19 +122,18 @@ export const ScheduledEmailsTable: React.FC<ScheduledEmailsTableProps> = ({
         </div>
       </div>
 
-      {/* Table Container */}
-      <div className="custom-table-container shadow-sm">
+      <div className="custom-table-container">
         <div className="table-responsive">
           <table className="table custom-table align-middle">
             <thead>
               <tr>
-                <th>Recipient Lead</th>
-                <th>Subject Line</th>
-                <th>Sender Identity</th>
-                <th>Scheduled Delivery</th>
-                <th>Throttling</th>
+                <th>Recipient</th>
+                <th>Subject</th>
+                <th>Sender</th>
+                <th>Scheduled At</th>
+                <th>Throttle</th>
                 <th>Status</th>
-                <th className="text-end">Action</th>
+                <th className="text-end">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -145,20 +141,20 @@ export const ScheduledEmailsTable: React.FC<ScheduledEmailsTableProps> = ({
                 <tr>
                   <td colSpan={7} className="text-center py-5">
                     <div className="spinner-border text-primary spinner-border-sm me-2" role="status"></div>
-                    <span className="text-secondary small">Searching & querying queue index...</span>
+                    <span className="text-muted small">Loading scheduled queue...</span>
                   </td>
                 </tr>
               ) : emails.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-5">
-                    <div className="text-secondary mb-2">
-                      <i className="bi bi-calendar2-x fs-1 d-block opacity-50 mb-2"></i>
-                      <span className="fw-semibold">No scheduled emails found</span>
+                    <div className="text-muted mb-1">
+                      <i className="bi bi-calendar2-x fs-2 d-block opacity-50 mb-2"></i>
+                      <span className="fw-semibold">No scheduled emails</span>
                     </div>
-                    <div className="small text-secondary">
+                    <div className="small text-muted">
                       {searchQuery
-                        ? 'No emails match your Elasticsearch search query. Try clearing the search.'
-                        : 'Click "Compose Email" above to schedule your first cold email sequence.'}
+                        ? 'No results matched your search query.'
+                        : 'Schedule an email using the button above to get started.'}
                     </div>
                   </td>
                 </tr>
@@ -173,28 +169,27 @@ export const ScheduledEmailsTable: React.FC<ScheduledEmailsTableProps> = ({
                     <tr key={job.id}>
                       <td>
                         <div className="d-flex align-items-center gap-2">
-                          <i className="bi bi-envelope text-primary small"></i>
-                          <span className="fw-semibold text-white">{job.recipientEmail}</span>
+                          <i className="bi bi-envelope text-muted small"></i>
+                          <span className="fw-medium text-dark">{job.recipientEmail}</span>
                         </div>
                       </td>
                       <td>
-                        <div className="text-truncate" style={{ maxWidth: '280px' }} title={job.subject}>
+                        <div className="text-truncate text-dark" style={{ maxWidth: '260px' }} title={job.subject}>
                           {job.subject}
                         </div>
                       </td>
                       <td>
-                        <span className="badge bg-secondary-subtle text-secondary small font-monospace">
+                        <span className="badge bg-light text-secondary border small font-monospace">
                           {job.senderEmail}
                         </span>
                       </td>
                       <td>
-                        <div className="small text-white">
-                          <i className="bi bi-calendar3 text-secondary me-1"></i>
+                        <div className="small text-muted">
                           {formattedDate}
                         </div>
                       </td>
                       <td>
-                        <span className="small text-secondary">
+                        <span className="small text-muted">
                           {job.delaySeconds}s delay • {job.hourlyLimit}/hr
                         </span>
                       </td>
@@ -204,7 +199,7 @@ export const ScheduledEmailsTable: React.FC<ScheduledEmailsTableProps> = ({
                           onClick={() => handleCancel(job.id)}
                           disabled={cancellingId === job.id}
                           className="btn btn-sm btn-outline-danger py-1 px-2 small"
-                          title="Cancel scheduled delivery"
+                          title="Cancel"
                         >
                           {cancellingId === job.id ? (
                             <span className="spinner-border spinner-border-sm" role="status"></span>
@@ -221,10 +216,9 @@ export const ScheduledEmailsTable: React.FC<ScheduledEmailsTableProps> = ({
           </table>
         </div>
 
-        {/* Pagination & Count Footer */}
-        <div className="d-flex justify-content-between align-items-center px-4 py-3 border-top border-secondary-subtle bg-dark-subtle">
-          <div className="small text-secondary">
-            Showing <strong>{emails.length}</strong> of <strong>{total}</strong> scheduled emails
+        <div className="d-flex justify-content-between align-items-center px-4 py-3 border-top bg-light">
+          <div className="small text-muted">
+            Showing <strong>{emails.length}</strong> of <strong>{total}</strong> emails
           </div>
           {totalPages > 1 && (
             <div className="d-flex gap-1">
@@ -235,7 +229,7 @@ export const ScheduledEmailsTable: React.FC<ScheduledEmailsTableProps> = ({
               >
                 Previous
               </button>
-              <span className="btn btn-sm btn-outline-secondary disabled border-0 text-white">
+              <span className="btn btn-sm btn-light disabled border text-dark">
                 Page {page} of {totalPages}
               </span>
               <button

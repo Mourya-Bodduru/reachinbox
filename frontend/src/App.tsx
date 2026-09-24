@@ -21,10 +21,8 @@ export const App: React.FC = () => {
   const [stats, setStats] = useState<EmailStats | null>(null);
   const [senders, setSenders] = useState<Sender[]>([]);
 
-  // Tabs: 'scheduled' | 'sent' | 'queue'
   const [activeTab, setActiveTab] = useState<'scheduled' | 'sent' | 'queue'>('scheduled');
 
-  // Scheduled table state
   const [scheduledEmails, setScheduledEmails] = useState<EmailJob[]>([]);
   const [scheduledTotal, setScheduledTotal] = useState(0);
   const [scheduledPage, setScheduledPage] = useState(1);
@@ -33,7 +31,6 @@ export const App: React.FC = () => {
   const [scheduledSender, setScheduledSender] = useState('');
   const [scheduledLoading, setScheduledLoading] = useState(false);
 
-  // Sent table state
   const [sentEmails, setSentEmails] = useState<EmailJob[]>([]);
   const [sentTotal, setSentTotal] = useState(0);
   const [sentPage, setSentPage] = useState(1);
@@ -42,45 +39,45 @@ export const App: React.FC = () => {
   const [sentSender, setSentSender] = useState('');
   const [sentLoading, setSentLoading] = useState(false);
 
-  // Modals state
   const [showCompose, setShowCompose] = useState(false);
   const [showSlackModal, setShowSlackModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
-  // Banner notification state
   const [alert, setAlert] = useState<{ type: 'success' | 'danger' | 'info'; message: string } | null>(null);
 
-  // Fetch initial profile
   const fetchUser = useCallback(async () => {
+    const token = localStorage.getItem('reachinbox_token');
+    if (!token) {
+      setUser(null);
+      return;
+    }
     try {
       const res = await getMeApi();
       setUser(res.user);
     } catch {
-      // Unauthenticated, leave user as null
+      localStorage.removeItem('reachinbox_token');
+      setUser(null);
     }
   }, []);
 
-  // Fetch KPI stats
   const fetchStats = useCallback(async () => {
     try {
       const res = await getEmailStatsApi();
       setStats(res);
     } catch (err) {
-      console.error('Error fetching stats:', err);
+      console.error(err);
     }
   }, []);
 
-  // Fetch senders
   const fetchSenders = useCallback(async () => {
     try {
       const res = await getSendersApi();
       setSenders(res.senders);
     } catch (err) {
-      console.error('Error fetching senders:', err);
+      console.error(err);
     }
   }, []);
 
-  // Fetch Scheduled Emails
   const fetchScheduled = useCallback(async () => {
     try {
       setScheduledLoading(true);
@@ -94,13 +91,12 @@ export const App: React.FC = () => {
       setScheduledTotal(res.total);
       setScheduledTotalPages(res.totalPages || 1);
     } catch (err) {
-      console.error('Error fetching scheduled emails:', err);
+      console.error(err);
     } finally {
       setScheduledLoading(false);
     }
   }, [scheduledPage, scheduledSearch, scheduledSender]);
 
-  // Fetch Sent Emails
   const fetchSent = useCallback(async () => {
     try {
       setSentLoading(true);
@@ -114,30 +110,27 @@ export const App: React.FC = () => {
       setSentTotal(res.total);
       setSentTotalPages(res.totalPages || 1);
     } catch (err) {
-      console.error('Error fetching sent emails:', err);
+      console.error(err);
     } finally {
       setSentLoading(false);
     }
   }, [sentPage, sentSearch, sentSender]);
 
-  // Initial load
   useEffect(() => {
     fetchUser();
     fetchStats();
     fetchSenders();
 
-    // Check for Slack OAuth redirect query params
     const params = new URLSearchParams(window.location.search);
     if (params.get('slack') === 'connected') {
-      setAlert({ type: 'success', message: '🎉 Slack workspace connected successfully! Rate-limit alerts are active.' });
+      setAlert({ type: 'success', message: 'Slack connected successfully' });
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (params.get('slack_error')) {
-      setAlert({ type: 'danger', message: `Slack OAuth connection failed: ${params.get('slack_error')}` });
+      setAlert({ type: 'danger', message: `Slack error: ${params.get('slack_error')}` });
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [fetchUser, fetchStats, fetchSenders]);
 
-  // Tab-dependent data fetching
   useEffect(() => {
     if (activeTab === 'scheduled') {
       fetchScheduled();
@@ -146,7 +139,6 @@ export const App: React.FC = () => {
     }
   }, [activeTab, fetchScheduled, fetchSent]);
 
-  // Periodic polling for real-time live queue and table updates (every 5 seconds)
   useEffect(() => {
     const interval = setInterval(() => {
       fetchStats();
@@ -162,21 +154,20 @@ export const App: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('reachinbox_token');
     setUser(null);
-    setAlert({ type: 'info', message: 'You have been logged out.' });
+    setAlert({ type: 'info', message: 'Logged out successfully' });
   };
 
   const handleCampaignScheduled = () => {
     setAlert({
       type: 'success',
-      message: '🚀 Cold email campaign scheduled successfully! BullMQ delayed jobs enqueued.',
+      message: 'Email campaign enqueued successfully',
     });
     fetchStats();
     fetchScheduled();
   };
 
   return (
-    <div className="min-vh-100 d-flex flex-column pb-5">
-      {/* Top Header */}
+    <div className="min-vh-100 d-flex flex-column pb-5 bg-main">
       <Header
         user={user}
         onOpenCompose={() => setShowCompose(true)}
@@ -185,9 +176,7 @@ export const App: React.FC = () => {
         onLogout={handleLogout}
       />
 
-      {/* Main Container */}
       <main className="container-fluid px-4 flex-grow-1">
-        {/* Global Notification Banner */}
         {alert && (
           <div
             className={`alert alert-${alert.type} alert-dismissible fade show d-flex align-items-center justify-content-between mb-4 shadow-sm`}
@@ -201,7 +190,7 @@ export const App: React.FC = () => {
                     : alert.type === 'danger'
                     ? 'bi-exclamation-triangle-fill'
                     : 'bi-info-circle-fill'
-                } fs-5`}
+                }`}
               ></i>
               <span>{alert.message}</span>
             </div>
@@ -214,12 +203,11 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* Dashboard Title & Quick Stats */}
         <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
           <div>
-            <h3 className="text-white fw-bold mb-1">Email Scheduler Dashboard</h3>
-            <p className="text-secondary small mb-0">
-              High-throughput cold email scheduling engine with BullMQ, Redis concurrency, rate limits, and Ethereal fake SMTP.
+            <h4 className="text-dark fw-bold mb-1">Email Scheduler Dashboard</h4>
+            <p className="text-muted small mb-0">
+              Reliable job scheduling engine powered by BullMQ, Redis, and MySQL.
             </p>
           </div>
           <div className="d-flex align-items-center gap-2">
@@ -232,7 +220,7 @@ export const App: React.FC = () => {
               className="btn btn-sm btn-secondary-custom d-flex align-items-center gap-2"
             >
               <i className="bi bi-arrow-repeat"></i>
-              <span>Sync Metrics</span>
+              <span>Refresh</span>
             </button>
             <button
               onClick={() => setShowCompose(true)}
@@ -244,11 +232,9 @@ export const App: React.FC = () => {
           </div>
         </div>
 
-        {/* KPI Stats Cards */}
         <StatsCards stats={stats} loading={false} />
 
-        {/* Navigation Tabs (Scheduled, Sent, Queue Monitor) */}
-        <div className="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary-subtle pb-3">
+        <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
           <ul className="nav nav-pills gap-2">
             <li className="nav-item">
               <button
@@ -258,8 +244,8 @@ export const App: React.FC = () => {
                 onClick={() => setActiveTab('scheduled')}
               >
                 <i className="bi bi-clock-history"></i>
-                <span>Scheduled Emails</span>
-                <span className="badge bg-black bg-opacity-25 rounded-pill small">
+                <span>Scheduled</span>
+                <span className="badge bg-secondary bg-opacity-25 rounded-pill small">
                   {stats?.scheduledCount ?? 0}
                 </span>
               </button>
@@ -272,8 +258,8 @@ export const App: React.FC = () => {
                 onClick={() => setActiveTab('sent')}
               >
                 <i className="bi bi-check2-circle"></i>
-                <span>Sent Emails</span>
-                <span className="badge bg-black bg-opacity-25 rounded-pill small">
+                <span>Sent History</span>
+                <span className="badge bg-secondary bg-opacity-25 rounded-pill small">
                   {stats?.sentCount ?? 0}
                 </span>
               </button>
@@ -286,13 +272,12 @@ export const App: React.FC = () => {
                 onClick={() => setActiveTab('queue')}
               >
                 <i className="bi bi-cpu"></i>
-                <span>Queue & Concurrency Monitor</span>
+                <span>Queue Monitor</span>
               </button>
             </li>
           </ul>
         </div>
 
-        {/* Tab Content Panels */}
         {activeTab === 'scheduled' && (
           <ScheduledEmailsTable
             emails={scheduledEmails}
@@ -336,7 +321,6 @@ export const App: React.FC = () => {
         )}
       </main>
 
-      {/* Compose Email Modal */}
       <ComposeModal
         show={showCompose}
         senders={senders}
@@ -344,7 +328,6 @@ export const App: React.FC = () => {
         onScheduled={handleCampaignScheduled}
       />
 
-      {/* Slack Integration Modal */}
       <SlackModal
         show={showSlackModal}
         user={user}
@@ -355,13 +338,12 @@ export const App: React.FC = () => {
         }}
       />
 
-      {/* Google & Dev Login Modal */}
       <LoginModal
         show={showLoginModal}
         onClose={() => setShowLoginModal(false)}
         onLoginSuccess={(loggedInUser) => {
           setUser(loggedInUser);
-          setAlert({ type: 'success', message: `Welcome back, ${loggedInUser.name || loggedInUser.email}!` });
+          setAlert({ type: 'success', message: `Welcome, ${loggedInUser.name || loggedInUser.email}!` });
           fetchStats();
         }}
       />

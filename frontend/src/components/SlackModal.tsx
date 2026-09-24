@@ -36,7 +36,7 @@ export const SlackModal: React.FC<SlackModalProps> = ({
     } catch (err: any) {
       setStatusMessage({
         type: 'danger',
-        text: err.response?.data?.error || err.message || 'Failed to initiate Slack OAuth flow',
+        text: err.response?.data?.error || err.message || 'Failed to initialize Slack OAuth',
       });
       setLoading(false);
     }
@@ -52,13 +52,13 @@ export const SlackModal: React.FC<SlackModalProps> = ({
       await connectSlackWebhookApi(webhookUrl.trim(), channel.trim() || undefined);
       setStatusMessage({
         type: 'success',
-        text: 'Slack webhook connected successfully!',
+        text: 'Slack webhook connected successfully',
       });
       onUpdated();
     } catch (err: any) {
       setStatusMessage({
         type: 'danger',
-        text: err.response?.data?.error || err.message || 'Failed to connect webhook',
+        text: err.response?.data?.error || err.message || 'Failed to save webhook',
       });
     } finally {
       setLoading(false);
@@ -72,12 +72,12 @@ export const SlackModal: React.FC<SlackModalProps> = ({
       const res = await testSlackNotificationApi();
       setStatusMessage({
         type: 'success',
-        text: res.message || 'Test notification sent to Slack successfully!',
+        text: res.message || 'Test notification delivered',
       });
     } catch (err: any) {
       setStatusMessage({
         type: 'danger',
-        text: err.response?.data?.error || err.message || 'Failed to deliver test alert',
+        text: err.response?.data?.error || err.message || 'Failed to send test alert',
       });
     } finally {
       setLoading(false);
@@ -92,7 +92,7 @@ export const SlackModal: React.FC<SlackModalProps> = ({
       await disconnectSlackApi();
       setStatusMessage({
         type: 'success',
-        text: 'Slack disconnected.',
+        text: 'Slack disconnected',
       });
       onUpdated();
     } catch (err: any) {
@@ -110,19 +110,19 @@ export const SlackModal: React.FC<SlackModalProps> = ({
   return (
     <div
       className="modal show d-block"
-      style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+      style={{ backgroundColor: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(4px)' }}
       tabIndex={-1}
     >
       <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content">
+        <div className="modal-content shadow-lg border-0">
           <div className="modal-header d-flex justify-content-between align-items-center">
             <div className="d-flex align-items-center gap-2">
               <i className="bi bi-slack fs-5 text-warning"></i>
-              <h5 className="modal-title text-white fw-bold mb-0">Slack Integration</h5>
+              <h5 className="modal-title text-dark fw-bold mb-0">Slack Notifications</h5>
             </div>
             <button
               type="button"
-              className="btn-close btn-close-white"
+              className="btn-close"
               onClick={onClose}
               disabled={loading}
             ></button>
@@ -138,7 +138,6 @@ export const SlackModal: React.FC<SlackModalProps> = ({
               </div>
             )}
 
-            {/* Connection Status Card */}
             <div className="stat-card mb-3 p-3">
               <div className="d-flex justify-content-between align-items-center">
                 <div className="d-flex align-items-center gap-2">
@@ -149,13 +148,13 @@ export const SlackModal: React.FC<SlackModalProps> = ({
                     style={{ width: '10px', height: '10px' }}
                   ></span>
                   <div>
-                    <div className="fw-semibold text-white small">
-                      {isConnected ? 'Slack Connected' : 'Slack Not Connected'}
+                    <div className="fw-semibold text-dark small">
+                      {isConnected ? 'Slack Connected' : 'Not Connected'}
                     </div>
-                    <div className="text-secondary small" style={{ fontSize: '0.75rem' }}>
+                    <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
                       {isConnected
                         ? `Channel: ${user.slackChannel || 'Default channel'}`
-                        : 'Rate-limit alerts are currently muted'}
+                        : 'Rate limit alerts are muted'}
                     </div>
                   </div>
                 </div>
@@ -165,8 +164,7 @@ export const SlackModal: React.FC<SlackModalProps> = ({
                     <button
                       onClick={handleTestNotification}
                       disabled={loading}
-                      className="btn btn-sm btn-outline-info d-flex align-items-center gap-1"
-                      title="Send test message to verified channel"
+                      className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1"
                     >
                       <i className="bi bi-send small"></i>
                       <span className="small">Test Alert</span>
@@ -183,20 +181,17 @@ export const SlackModal: React.FC<SlackModalProps> = ({
               </div>
             </div>
 
-            {/* Rate-limit alert information */}
-            <div className="p-3 rounded-3 mb-3" style={{ background: '#0a101d', border: '1px solid #1e293b' }}>
+            <div className="p-3 rounded-2 mb-3 bg-light border">
               <div className="d-flex gap-2">
-                <i className="bi bi-info-circle text-info"></i>
-                <div className="small text-secondary" style={{ fontSize: '0.8rem' }}>
-                  When an email sender reaches their configured hourly threshold (e.g. 50 emails/hour), BullMQ
-                  workers automatically reschedule excess jobs to the next hour window and fire an instant Slack alert with sender details, current counts, and the next window time.
+                <i className="bi bi-info-circle text-primary"></i>
+                <div className="small text-muted" style={{ fontSize: '0.8rem' }}>
+                  When a sender hits their configured hourly limit, excess jobs are rescheduled to the next hour window, and a Slack alert is sent immediately with details and next window time.
                 </div>
               </div>
             </div>
 
             {!isConnected ? (
               <div>
-                {/* OAuth Connect */}
                 <div className="text-center mb-3">
                   <button
                     onClick={handleOAuthConnect}
@@ -209,16 +204,17 @@ export const SlackModal: React.FC<SlackModalProps> = ({
                 </div>
 
                 <div className="d-flex align-items-center my-3">
-                  <hr className="flex-grow-1 border-secondary-subtle" />
-                  <span className="px-2 text-secondary small">OR CONNECT VIA WEBHOOK</span>
-                  <hr className="flex-grow-1 border-secondary-subtle" />
+                  <hr className="flex-grow-1" />
+                  <span className="px-2 text-muted small" style={{ fontSize: '0.75rem' }}>
+                    OR ENTER WEBHOOK
+                  </span>
+                  <hr className="flex-grow-1" />
                 </div>
 
-                {/* Direct Incoming Webhook Fallback Form */}
                 <form onSubmit={handleWebhookSubmit}>
                   <div className="mb-2">
-                    <label className="form-label text-secondary small fw-medium">
-                      Slack Incoming Webhook URL
+                    <label className="form-label text-muted small fw-medium">
+                      Webhook URL
                     </label>
                     <input
                       type="url"
@@ -230,13 +226,13 @@ export const SlackModal: React.FC<SlackModalProps> = ({
                     />
                   </div>
                   <div className="mb-3">
-                    <label className="form-label text-secondary small fw-medium">
-                      Channel Name (Optional)
+                    <label className="form-label text-muted small fw-medium">
+                      Channel Name
                     </label>
                     <input
                       type="text"
                       className="form-control form-control-sm"
-                      placeholder="#reachinbox-alerts"
+                      placeholder="#rate-limit-alerts"
                       value={channel}
                       onChange={(e) => setChannel(e.target.value)}
                     />
@@ -246,14 +242,14 @@ export const SlackModal: React.FC<SlackModalProps> = ({
                     disabled={loading || !webhookUrl}
                     className="btn btn-sm btn-secondary-custom w-100"
                   >
-                    Save Webhook Connection
+                    Save Webhook
                   </button>
                 </form>
               </div>
             ) : (
               <div className="text-center text-success small py-2">
-                <i className="bi bi-shield-check fs-4 d-block mb-1"></i>
-                Rate-limit notifications are active for sender accounts.
+                <i className="bi bi-check-circle fs-4 d-block mb-1"></i>
+                Rate-limit notifications are active
               </div>
             )}
           </div>

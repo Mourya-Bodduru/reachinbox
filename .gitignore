@@ -11,6 +11,8 @@ frontend/dist/
 # Environment files
 .env
 backend/.env
+frontend/.env
+*.env
 
 # Temporary and log files
 *.log

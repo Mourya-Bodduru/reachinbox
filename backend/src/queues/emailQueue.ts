@@ -14,7 +14,7 @@ export interface EmailJobPayload {
   delaySeconds: number;
   hourlyLimit: number;
   batchId?: string;
-  scheduledAt: string; // ISO string
+  scheduledAt: string;
 }
 
 export const emailQueue = new Queue<EmailJobPayload>(EMAIL_QUEUE_NAME, {
@@ -26,7 +26,7 @@ export const emailQueue = new Queue<EmailJobPayload>(EMAIL_QUEUE_NAME, {
       delay: 5000,
     },
     removeOnComplete: {
-      age: 24 * 3600, // 24 hours
+      age: 24 * 3600,
       count: 10000,
     },
     removeOnFail: {
@@ -36,26 +36,17 @@ export const emailQueue = new Queue<EmailJobPayload>(EMAIL_QUEUE_NAME, {
   },
 });
 
-/**
- * Add a persistent delayed email job to BullMQ.
- * Uses deterministic jobId to ensure idempotency.
- */
 export async function enqueueEmailJob(
   payload: EmailJobPayload,
   delayMs: number
 ) {
   const jobId = `email_${payload.emailJobId}`;
-  const job = await emailQueue.add('send-email', payload, {
+  return emailQueue.add('send-email', payload, {
     delay: Math.max(0, delayMs),
     jobId,
   });
-
-  return job;
 }
 
-/**
- * Cancel an enqueued job in BullMQ
- */
 export async function removeJobFromQueue(emailJobId: string) {
   const jobId = `email_${emailJobId}`;
   const job = await emailQueue.getJob(jobId);
@@ -66,9 +57,6 @@ export async function removeJobFromQueue(emailJobId: string) {
   return false;
 }
 
-/**
- * Retrieve queue health and statistics for the dashboard
- */
 export async function getQueueStats() {
   const [waiting, active, delayed, completed, failed] = await Promise.all([
     emailQueue.getWaitingCount(),

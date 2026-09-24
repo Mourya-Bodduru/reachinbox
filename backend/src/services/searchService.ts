@@ -19,13 +19,11 @@ export function getElasticsearchClient(): Client {
 export async function initElasticsearch(): Promise<void> {
   const client = getElasticsearchClient();
   try {
-    const health = await client.cluster.health();
-    console.log(`[Elasticsearch] Connected! Cluster status: ${health.status}`);
+    await client.cluster.health();
     esAvailable = true;
 
     const indexExists = await client.indices.exists({ index: env.ELASTICSEARCH_INDEX });
     if (!indexExists) {
-      console.log(`[Elasticsearch] Creating index "${env.ELASTICSEARCH_INDEX}" with mappings...`);
       await client.indices.create({
         index: env.ELASTICSEARCH_INDEX,
         body: {
@@ -50,11 +48,9 @@ export async function initElasticsearch(): Promise<void> {
           },
         },
       });
-      console.log(`[Elasticsearch] Index "${env.ELASTICSEARCH_INDEX}" created successfully.`);
     }
-  } catch (err: any) {
+  } catch {
     esAvailable = false;
-    console.warn(`[Elasticsearch] Offline or not reachable (${err.message}). Database fallback will be active.`);
   }
 }
 
@@ -96,7 +92,7 @@ export async function indexEmail(email: EmailDocument): Promise<void> {
       },
     });
   } catch (err: any) {
-    console.error(`[Elasticsearch] Error indexing email ${email.id}:`, err.message);
+    console.error('Error indexing email:', err.message);
   }
 }
 
@@ -113,7 +109,7 @@ export async function updateEmailIndex(
       doc: partial,
     });
   } catch (err: any) {
-    console.error(`[Elasticsearch] Error updating email index ${id}:`, err.message);
+    console.error('Error updating email index:', err.message);
   }
 }
 
@@ -130,7 +126,6 @@ export async function searchEmails(options: SearchOptions) {
   const limit = Math.max(1, Math.min(100, options.limit || 20));
   const from = (page - 1) * limit;
 
-  // Try Elasticsearch first if available
   if (esAvailable) {
     try {
       const client = getElasticsearchClient();
@@ -187,12 +182,11 @@ export async function searchEmails(options: SearchOptions) {
         totalPages: Math.ceil(totalHits / limit),
         emails,
       };
-    } catch (err: any) {
-      console.warn(`[Elasticsearch] Search query failed (${err.message}), falling back to database.`);
+    } catch {
+      // Fallback to relational query if Elasticsearch query fails
     }
   }
 
-  // Graceful fallback to MySQL database
   const where: any = {};
   if (options.status) {
     where.status = options.status;

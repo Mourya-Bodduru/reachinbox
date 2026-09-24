@@ -14,25 +14,24 @@ export const QueueMonitor: React.FC<QueueMonitorProps> = ({
 }) => {
   return (
     <div className="card border-0 bg-transparent">
-      {/* Header Banner */}
       <div className="stat-card mb-4 p-4">
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
           <div>
             <div className="d-flex align-items-center gap-2 mb-1">
               <span
                 className="rounded-circle bg-success d-inline-block"
-                style={{ width: '10px', height: '10px' }}
+                style={{ width: '8px', height: '8px' }}
               ></span>
-              <h5 className="text-white fw-bold mb-0">BullMQ Distributed Queue Architecture</h5>
+              <h5 className="text-dark fw-bold mb-0">BullMQ Queue Monitor</h5>
             </div>
-            <p className="text-secondary small mb-0">
-              Persistent Redis-backed job scheduling with zero OS-level or Node cron dependencies. Survives server restarts.
+            <p className="text-muted small mb-0">
+              Redis-backed delayed job queue running with 5 concurrent workers. No cron dependencies.
             </p>
           </div>
           <div className="d-flex gap-2">
             <button onClick={onRefresh} className="btn btn-sm btn-secondary-custom">
               <i className={`bi bi-arrow-clockwise me-1 ${loading ? 'spin' : ''}`}></i>
-              Refresh Metrics
+              Refresh
             </button>
             <a
               href="/admin/queues"
@@ -41,36 +40,22 @@ export const QueueMonitor: React.FC<QueueMonitorProps> = ({
               className="btn btn-sm btn-primary-custom d-flex align-items-center gap-2"
             >
               <i className="bi bi-box-arrow-up-right"></i>
-              <span>Launch Bull-Board UI</span>
+              <span>Open Dashboard</span>
             </a>
           </div>
         </div>
       </div>
 
-      {/* Grid of Queue State Counters */}
       <div className="row g-3 mb-4">
         <div className="col-12 col-md-4">
           <div className="stat-card p-3">
             <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="text-secondary small fw-medium">Delayed (Future Scheduled)</span>
-              <span className="badge bg-info-subtle text-info">BullMQ Delayed</span>
+              <span className="text-muted small fw-medium">Delayed (Scheduled)</span>
+              <span className="badge bg-info-subtle text-info border border-info-subtle">Delayed</span>
             </div>
-            <div className="fs-2 fw-bold text-white mb-1">{stats?.queue.delayed ?? 0}</div>
-            <div className="small text-secondary">
-              Persisted in Redis ZSET. Resumes firing accurately even if server restarts.
-            </div>
-          </div>
-        </div>
-
-        <div className="col-12 col-md-4">
-          <div className="stat-card p-3">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="text-secondary small fw-medium">Active (In Flight)</span>
-              <span className="badge bg-primary-subtle text-primary">Concurrency: 5</span>
-            </div>
-            <div className="fs-2 fw-bold text-white mb-1">{stats?.queue.active ?? 0}</div>
-            <div className="small text-secondary">
-              Currently executing across worker threads with 2s provider throttling.
+            <div className="fs-2 fw-bold text-dark mb-1">{stats?.queue.delayed ?? 0}</div>
+            <div className="small text-muted">
+              Future jobs stored in Redis. Fires automatically at execution time.
             </div>
           </div>
         </div>
@@ -78,12 +63,25 @@ export const QueueMonitor: React.FC<QueueMonitorProps> = ({
         <div className="col-12 col-md-4">
           <div className="stat-card p-3">
             <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="text-secondary small fw-medium">Waiting (Ready to Send)</span>
-              <span className="badge bg-secondary-subtle text-secondary">BullMQ Waiting</span>
+              <span className="text-muted small fw-medium">Active (In Flight)</span>
+              <span className="badge bg-primary-subtle text-primary border border-primary-subtle">Active</span>
             </div>
-            <div className="fs-2 fw-bold text-white mb-1">{stats?.queue.waiting ?? 0}</div>
-            <div className="small text-secondary">
-              Eligible jobs waiting in Redis FIFO list for an available worker thread.
+            <div className="fs-2 fw-bold text-dark mb-1">{stats?.queue.active ?? 0}</div>
+            <div className="small text-muted">
+              Jobs currently being processed by worker threads with 2s delay.
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 col-md-4">
+          <div className="stat-card p-3">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <span className="text-muted small fw-medium">Waiting</span>
+              <span className="badge bg-light text-secondary border">Waiting</span>
+            </div>
+            <div className="fs-2 fw-bold text-dark mb-1">{stats?.queue.waiting ?? 0}</div>
+            <div className="small text-muted">
+              Jobs ready to execute awaiting next available worker.
             </div>
           </div>
         </div>
@@ -91,12 +89,12 @@ export const QueueMonitor: React.FC<QueueMonitorProps> = ({
         <div className="col-12 col-md-6">
           <div className="stat-card p-3">
             <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="text-secondary small fw-medium">Completed Jobs (24h)</span>
-              <span className="badge bg-success-subtle text-success">Retained for Audit</span>
+              <span className="text-muted small fw-medium">Completed</span>
+              <span className="badge bg-success-subtle text-success border border-success-subtle">Success</span>
             </div>
-            <div className="fs-2 fw-bold text-white mb-1">{stats?.queue.completed ?? 0}</div>
-            <div className="small text-secondary">
-              Cleanly dispatched and acknowledged jobs.
+            <div className="fs-2 fw-bold text-dark mb-1">{stats?.queue.completed ?? 0}</div>
+            <div className="small text-muted">
+              Successfully delivered emails through SMTP transporter.
             </div>
           </div>
         </div>
@@ -104,26 +102,25 @@ export const QueueMonitor: React.FC<QueueMonitorProps> = ({
         <div className="col-12 col-md-6">
           <div className="stat-card p-3">
             <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="text-secondary small fw-medium">Failed Jobs</span>
-              <span className="badge bg-danger-subtle text-danger">3x Exponential Backoff</span>
+              <span className="text-muted small fw-medium">Failed</span>
+              <span className="badge bg-danger-subtle text-danger border border-danger-subtle">Failed</span>
             </div>
-            <div className="fs-2 fw-bold text-white mb-1">{stats?.queue.failed ?? 0}</div>
-            <div className="small text-secondary">
-              Jobs that failed all retry attempts with error logs captured.
+            <div className="fs-2 fw-bold text-dark mb-1">{stats?.queue.failed ?? 0}</div>
+            <div className="small text-muted">
+              Jobs that encountered errors after 3 retry attempts.
             </div>
           </div>
         </div>
       </div>
 
-      {/* Embedded Iframe Preview Option */}
       <div className="custom-table-container p-3">
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <div className="fw-semibold text-white small">
-            <i className="bi bi-display me-2 text-primary"></i>Live Bull-Board Queue Dashboard
+          <div className="fw-semibold text-dark small">
+            <i className="bi bi-display me-2 text-primary"></i>Bull-Board Interface
           </div>
-          <span className="text-secondary small">Mounted at /admin/queues</span>
+          <span className="text-muted small">Mounted at /admin/queues</span>
         </div>
-        <div className="rounded-3 overflow-hidden" style={{ height: '480px', border: '1px solid #1e293b' }}>
+        <div className="rounded-2 overflow-hidden border" style={{ height: '480px' }}>
           <iframe
             src="/admin/queues"
             title="BullMQ Dashboard"

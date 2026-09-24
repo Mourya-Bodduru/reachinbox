@@ -19,38 +19,34 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="app-header py-3 px-4 mb-4">
       <div className="container-fluid d-flex justify-content-between align-items-center">
-        {/* Brand */}
         <div className="d-flex align-items-center gap-3">
           <div
-            className="d-flex align-items-center justify-content-center text-white rounded-3 shadow-sm"
+            className="d-flex align-items-center justify-content-center text-white rounded-2"
             style={{
-              width: '38px',
-              height: '38px',
-              background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+              width: '36px',
+              height: '36px',
+              backgroundColor: '#4f46e5',
             }}
           >
-            <i className="bi bi-envelope-paper-fill fs-5"></i>
+            <i className="bi bi-envelope-fill fs-5"></i>
           </div>
           <div>
             <div className="d-flex align-items-center gap-2">
-              <span className="fw-bold fs-5 tracking-tight text-white">ReachInbox</span>
-              <span className="brand-badge">PRO</span>
+              <span className="fw-bold fs-5 tracking-tight text-dark">ReachInbox</span>
+              <span className="brand-badge">Scheduler</span>
             </div>
-            <div className="text-secondary small" style={{ fontSize: '0.72rem' }}>
-              Distributed Email Job Scheduler
+            <div className="text-muted small" style={{ fontSize: '0.72rem' }}>
+              Queue & Dispatch Engine
             </div>
           </div>
         </div>
 
-        {/* Action Controls */}
-        <div className="d-flex align-items-center gap-3">
-          {/* Live BullMQ Dashboard link */}
+        <div className="d-flex align-items-center gap-2">
           <a
             href="/admin/queues"
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-sm btn-secondary-custom d-flex align-items-center gap-2"
-            title="Open real-time BullMQ Dashboard in new tab"
           >
             <span
               className="rounded-circle bg-success d-inline-block"
@@ -60,7 +56,6 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="d-none d-md-inline">BullMQ Dashboard</span>
           </a>
 
-          {/* Slack Integration Button */}
           <button
             onClick={onOpenSlackModal}
             className={`btn btn-sm ${
@@ -75,16 +70,14 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </button>
 
-          {/* Primary Compose Button */}
           <button
             onClick={onOpenCompose}
             className="btn btn-sm btn-primary-custom d-flex align-items-center gap-2"
           >
-            <i className="bi bi-plus-lg fw-bold"></i>
+            <i className="bi bi-plus-lg"></i>
             <span>Compose Email</span>
           </button>
 
-          {/* User Profile / Auth */}
           {user ? (
             <div className="dropdown">
               <button
@@ -98,20 +91,20 @@ export const Header: React.FC<HeaderProps> = ({
                     user.avatar ||
                     `https://ui-avatars.com/api/?name=${encodeURIComponent(
                       user.name || user.email
-                    )}&background=6366f1&color=fff`
+                    )}&background=e0e7ff&color=4338ca`
                   }
                   alt={user.name || user.email}
                   className="rounded-circle"
                   style={{ width: '28px', height: '28px', objectFit: 'cover' }}
                 />
-                <span className="small d-none d-lg-inline text-white fw-medium">
+                <span className="small d-none d-lg-inline text-dark fw-medium">
                   {user.name || user.email.split('@')[0]}
                 </span>
               </button>
-              <ul className="dropdown-menu dropdown-menu-end shadow border-secondary-subtle">
-                <li className="px-3 py-2 border-bottom border-secondary-subtle">
-                  <div className="fw-semibold text-white small">{user.name || 'User'}</div>
-                  <div className="text-secondary small">{user.email}</div>
+              <ul className="dropdown-menu dropdown-menu-end shadow-sm border">
+                <li className="px-3 py-2 border-bottom">
+                  <div className="fw-semibold text-dark small">{user.name || 'User'}</div>
+                  <div className="text-muted small">{user.email}</div>
                 </li>
                 <li>
                   <button
@@ -128,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={onOpenLogin}
               className="btn btn-sm btn-primary-custom d-flex align-items-center gap-1"
             >
-              <i className="bi bi-google"></i>
+              <i className="bi bi-box-arrow-in-right"></i>
               <span>Sign In</span>
             </button>
           )}

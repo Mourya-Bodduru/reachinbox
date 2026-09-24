@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # MySQL Relational Database
   mysql:
     image: mysql:8.0
     container_name: reachinbox_mysql
@@ -19,7 +18,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis In-Memory Data Store & BullMQ Broker
   redis:
     image: redis:7-alpine
     container_name: reachinbox_redis
@@ -35,7 +33,6 @@ services:
       timeout: 3s
       retries: 5
 
-  # Elasticsearch Full-Text Search Engine
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
     container_name: reachinbox_elasticsearch
@@ -49,7 +46,6 @@ services:
     volumes:
       - es_data:/usr/share/elasticsearch/data
 
-  # Express.js + BullMQ Backend Service
   backend:
     build:
       context: ./backend
@@ -69,6 +65,8 @@ services:
       MAX_EMAILS_PER_HOUR_PER_SENDER: 50
       JWT_SECRET: reachinbox_production_secret_key_2026
       FRONTEND_URL: "http://localhost:5173"
+      ETHEREAL_USER: "a4ct2pxwmslx2pyy@ethereal.email"
+      ETHEREAL_PASS: "ku6W3VZdSEmwJRYFZn"
     ports:
       - "5000:5000"
     depends_on:
@@ -77,7 +75,6 @@ services:
       redis:
         condition: service_healthy
 
-  # React Frontend Dashboard
   frontend:
     build:
       context: ./frontend

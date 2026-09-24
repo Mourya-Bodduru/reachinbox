@@ -13,7 +13,6 @@ export const redisOptions: RedisOptions = {
   },
 };
 
-// Dedicated Redis client for rate limiting and app-level caching
 export const redisClient = new Redis(redisOptions);
 
 redisClient.on('connect', () => {

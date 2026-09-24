@@ -38,12 +38,10 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
 
   if (!show) return null;
 
-  // Extract valid emails from text or file
   const extractEmails = (text: string): string[] => {
     const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi;
     const matches = text.match(emailRegex) || [];
-    const unique = Array.from(new Set(matches.map((e) => e.toLowerCase().trim())));
-    return unique;
+    return Array.from(new Set(matches.map((e) => e.toLowerCase().trim())));
   };
 
   const handleFileUpload = (file: File) => {
@@ -52,7 +50,7 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
       const content = (e.target?.result as string) || '';
       const parsed = extractEmails(content);
       if (parsed.length === 0) {
-        setError('No valid email addresses found in the uploaded file.');
+        setError('No valid email addresses found in file');
       } else {
         setError(null);
         setRecipients(parsed);
@@ -88,7 +86,6 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
     setRecipients(parsed);
   };
 
-  // Quick preset buttons for Start Time
   const setQuickTime = (type: 'now' | '15m' | 'tomorrow') => {
     const d = new Date();
     if (type === '15m') {
@@ -97,7 +94,6 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
       d.setDate(d.getDate() + 1);
       d.setHours(9, 0, 0, 0);
     }
-    // format as YYYY-MM-DDTHH:mm
     const tzOffset = d.getTimezoneOffset() * 60000;
     const localISOTime = new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
     setStartTime(type === 'now' ? '' : localISOTime);
@@ -108,19 +104,19 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
     setError(null);
 
     if (!subject.trim()) {
-      setError('Please provide an email subject.');
+      setError('Subject is required');
       return;
     }
     if (!body.trim()) {
-      setError('Please provide the email body content.');
+      setError('Email body is required');
       return;
     }
     if (recipients.length === 0) {
-      setError('Please upload a CSV or specify at least one recipient email address.');
+      setError('Please add at least one recipient');
       return;
     }
     if (!selectedSender) {
-      setError('Please choose a sender identity.');
+      setError('Please select a sender');
       return;
     }
 
@@ -139,7 +135,7 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
       onScheduled();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || 'Failed to schedule emails');
+      setError(err.response?.data?.error || err.message || 'Failed to schedule');
     } finally {
       setLoading(false);
     }
@@ -148,28 +144,24 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
   return (
     <div
       className="modal show d-block"
-      style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+      style={{ backgroundColor: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(4px)' }}
       tabIndex={-1}
     >
       <div className="modal-dialog modal-dialog-centered modal-lg">
-        <div className="modal-content">
+        <div className="modal-content shadow-lg border-0">
           <div className="modal-header d-flex justify-content-between align-items-center">
             <div className="d-flex align-items-center gap-2">
               <div
-                className="rounded-circle d-flex align-items-center justify-content-center text-white"
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                }}
+                className="rounded-2 d-flex align-items-center justify-content-center text-white"
+                style={{ width: '32px', height: '32px', backgroundColor: '#4f46e5' }}
               >
                 <i className="bi bi-send-plus-fill small"></i>
               </div>
-              <h5 className="modal-title text-white fw-bold mb-0">Schedule Email Campaign</h5>
+              <h5 className="modal-title text-dark fw-bold mb-0">Schedule Email</h5>
             </div>
             <button
               type="button"
-              className="btn-close btn-close-white"
+              className="btn-close"
               onClick={onClose}
               disabled={loading}
             ></button>
@@ -185,9 +177,8 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
               )}
 
               <div className="row g-3">
-                {/* Sender Identity */}
                 <div className="col-12 col-md-6">
-                  <label className="form-label text-secondary small fw-medium">
+                  <label className="form-label text-muted small fw-medium">
                     Sender Account
                   </label>
                   <select
@@ -203,26 +194,24 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
                   </select>
                 </div>
 
-                {/* Email Subject */}
                 <div className="col-12 col-md-6">
-                  <label className="form-label text-secondary small fw-medium">Subject Line</label>
+                  <label className="form-label text-muted small fw-medium">Subject Line</label>
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="e.g. Quick question regarding your outreach pipeline"
+                    placeholder="Enter email subject..."
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     required
                   />
                 </div>
 
-                {/* Leads CSV / File Upload */}
                 <div className="col-12">
-                  <label className="form-label text-secondary small fw-medium d-flex justify-content-between">
-                    <span>Leads & Recipients</span>
+                  <label className="form-label text-muted small fw-medium d-flex justify-content-between">
+                    <span>Recipients / Leads</span>
                     {recipients.length > 0 && (
-                      <span className="text-success fw-bold">
-                        ✓ {recipients.length} valid email{recipients.length > 1 ? 's' : ''} detected
+                      <span className="text-success fw-semibold">
+                        {recipients.length} email{recipients.length > 1 ? 's' : ''} parsed
                       </span>
                     )}
                   </label>
@@ -246,35 +235,33 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
                         }
                       }}
                     />
-                    <i className="bi bi-cloud-arrow-up fs-2 text-primary mb-1 d-block"></i>
-                    <div className="fw-semibold text-white small">
-                      Drop CSV or TXT file here, or <span className="text-primary text-decoration-underline">browse</span>
+                    <i className="bi bi-upload fs-3 text-primary mb-1 d-block"></i>
+                    <div className="fw-medium text-dark small">
+                      Upload CSV or TXT, or <span className="text-primary text-decoration-underline">browse</span>
                     </div>
-                    <div className="text-secondary small mt-1" style={{ fontSize: '0.78rem' }}>
-                      Automatically parses email addresses from comma-separated or row-by-row lists
+                    <div className="text-muted small mt-1" style={{ fontSize: '0.78rem' }}>
+                      Auto-detects emails from comma or line-separated files
                     </div>
                   </div>
 
-                  {/* Manual Paste / Edit Area */}
                   <textarea
                     rows={2}
                     className="form-control font-monospace small"
-                    placeholder="Or paste emails directly (comma, semicolon, or newline separated)..."
+                    placeholder="Or type/paste emails manually..."
                     value={rawTextRecipients}
                     onChange={handleTextRecipientsChange}
                   ></textarea>
 
-                  {/* Preview Chips */}
                   {recipients.length > 0 && (
                     <div className="mt-2 d-flex flex-wrap gap-1 align-items-center">
-                      <span className="small text-secondary me-1">Preview:</span>
+                      <span className="small text-muted me-1">Parsed:</span>
                       {recipients.slice(0, 5).map((r, idx) => (
                         <span key={idx} className="lead-chip">
                           {r}
                         </span>
                       ))}
                       {recipients.length > 5 && (
-                        <span className="badge bg-secondary-subtle text-secondary small">
+                        <span className="badge bg-light text-muted border small">
                           +{recipients.length - 5} more
                         </span>
                       )}
@@ -282,24 +269,22 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
                   )}
                 </div>
 
-                {/* Email Body */}
                 <div className="col-12">
-                  <label className="form-label text-secondary small fw-medium">Email Content</label>
+                  <label className="form-label text-muted small fw-medium">Body</label>
                   <textarea
                     rows={4}
                     className="form-control"
-                    placeholder="Write your email body here... (e.g. Hi there, I noticed your company is scaling sales outreach...)"
+                    placeholder="Write email body content..."
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
                     required
                   ></textarea>
                 </div>
 
-                {/* Start Time with Quick Presets */}
                 <div className="col-12 col-md-6">
-                  <label className="form-label text-secondary small fw-medium d-flex justify-content-between">
-                    <span>Campaign Start Time</span>
-                    <span className="text-secondary small">Leave empty to send immediately</span>
+                  <label className="form-label text-muted small fw-medium d-flex justify-content-between">
+                    <span>Start Time</span>
+                    <span className="text-muted small">Default: Send now</span>
                   </label>
                   <input
                     type="datetime-local"
@@ -324,7 +309,7 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
                       style={{ fontSize: '0.75rem' }}
                       onClick={() => setQuickTime('15m')}
                     >
-                      +15 Mins
+                      +15m
                     </button>
                     <button
                       type="button"
@@ -337,11 +322,10 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
                   </div>
                 </div>
 
-                {/* Delay & Rate Limiting Controls */}
                 <div className="col-12 col-md-6">
                   <div className="row g-2">
                     <div className="col-6">
-                      <label className="form-label text-secondary small fw-medium">
+                      <label className="form-label text-muted small fw-medium">
                         Delay (Seconds)
                       </label>
                       <input
@@ -352,12 +336,12 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
                         value={delayBetweenEmails}
                         onChange={(e) => setDelayBetweenEmails(parseInt(e.target.value) || 2)}
                       />
-                      <div className="text-secondary small mt-1" style={{ fontSize: '0.72rem' }}>
-                        Min 2s provider throttling
+                      <div className="text-muted small mt-1" style={{ fontSize: '0.72rem' }}>
+                        Min 2s between sends
                       </div>
                     </div>
                     <div className="col-6">
-                      <label className="form-label text-secondary small fw-medium">
+                      <label className="form-label text-muted small fw-medium">
                         Hourly Limit
                       </label>
                       <input
@@ -368,8 +352,8 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
                         value={hourlyLimit}
                         onChange={(e) => setHourlyLimit(parseInt(e.target.value) || 50)}
                       />
-                      <div className="text-secondary small mt-1" style={{ fontSize: '0.72rem' }}>
-                        Max emails/hour per sender
+                      <div className="text-muted small mt-1" style={{ fontSize: '0.72rem' }}>
+                        Per sender limit
                       </div>
                     </div>
                   </div>
@@ -378,14 +362,12 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
             </div>
 
             <div className="modal-footer d-flex justify-content-between">
-              <div className="text-secondary small">
-                {recipients.length > 0 ? (
+              <div className="text-muted small">
+                {recipients.length > 0 && (
                   <span>
                     Queue will dispatch <strong>{recipients.length}</strong> email
-                    {recipients.length > 1 ? 's' : ''} via BullMQ delayed jobs.
+                    {recipients.length > 1 ? 's' : ''}
                   </span>
-                ) : (
-                  <span>Upload leads to schedule campaign</span>
                 )}
               </div>
               <div className="d-flex gap-2">
@@ -409,7 +391,7 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
                     </>
                   ) : (
                     <>
-                      <i className="bi bi-calendar-check fw-bold"></i>
+                      <i className="bi bi-calendar-check"></i>
                       <span>Schedule Campaign</span>
                     </>
                   )}
