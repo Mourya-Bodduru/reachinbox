@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
@@ -18,7 +18,7 @@ async function bootstrap() {
 
   app.use(
     cors({
-      origin: (requestOrigin, callback) => {
+      origin: (requestOrigin: any, callback: any) => {
         if (!requestOrigin) return callback(null, true);
         if (
           requestOrigin === env.FRONTEND_URL ||
@@ -47,7 +47,7 @@ async function bootstrap() {
   app.use('/admin/queues', serverAdapter.getRouter());
   app.use('/api', apiRouter);
 
-  app.get('/health', async (_req, res) => {
+  app.get('/health', async (_req: Request, res: Response) => {
     let dbStatus = 'ok';
     let redisStatus = 'ok';
 
