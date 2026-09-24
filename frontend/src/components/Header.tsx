@@ -43,7 +43,11 @@ export const Header: React.FC<HeaderProps> = ({
 
         <div className="d-flex align-items-center gap-2">
           <a
-            href="/admin/queues"
+            href={
+              import.meta.env.VITE_API_URL
+                ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/admin/queues`
+                : '/admin/queues'
+            }
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-sm btn-secondary-custom d-flex align-items-center gap-2"
