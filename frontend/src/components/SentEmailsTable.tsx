@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { EmailJob, Sender } from '../types';
 import { format } from 'date-fns';
 
@@ -31,6 +31,8 @@ export const SentEmailsTable: React.FC<SentEmailsTableProps> = ({
   onPageChange,
   onRefresh,
 }) => {
+  const [viewingEmail, setViewingEmail] = useState<EmailJob | null>(null);
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'SENT':
@@ -164,19 +166,13 @@ export const SentEmailsTable: React.FC<SentEmailsTableProps> = ({
                       </td>
                       <td>{getStatusBadge(job.status)}</td>
                       <td className="text-end">
-                        {job.etherealPreviewUrl ? (
-                          <a
-                            href={job.etherealPreviewUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 py-1 px-2"
-                          >
-                            <i className="bi bi-box-arrow-up-right"></i>
-                            <span className="small">View Email</span>
-                          </a>
-                        ) : (
-                          <span className="text-muted small">—</span>
-                        )}
+                        <button
+                          onClick={() => setViewingEmail(job)}
+                          className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 py-1 px-2"
+                        >
+                          <i className="bi bi-envelope-open"></i>
+                          <span className="small">View Email</span>
+                        </button>
                       </td>
                     </tr>
                   );
@@ -213,6 +209,99 @@ export const SentEmailsTable: React.FC<SentEmailsTableProps> = ({
           )}
         </div>
       </div>
+
+      {viewingEmail && (
+        <div
+          className="modal show d-block"
+          style={{ backgroundColor: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(4px)', zIndex: 1060 }}
+          tabIndex={-1}
+        >
+          <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div className="modal-content shadow-lg border-0">
+              <div className="modal-header border-bottom d-flex justify-content-between align-items-center px-4 py-3">
+                <div className="d-flex align-items-center gap-2">
+                  <i className="bi bi-envelope-paper-fill fs-5 text-primary"></i>
+                  <h5 className="modal-title text-dark fw-bold mb-0">Email Details</h5>
+                </div>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setViewingEmail(null)}
+                ></button>
+              </div>
+
+              <div className="modal-body p-4">
+                <div className="bg-light p-3 rounded-3 mb-3 border">
+                  <div className="row g-2 small">
+                    <div className="col-12 col-md-7">
+                      <span className="text-muted fw-semibold">Subject:</span>
+                      <span className="text-dark fw-bold ms-2">{viewingEmail.subject}</span>
+                    </div>
+                    <div className="col-12 col-md-5 text-md-end">
+                      <span className="text-muted fw-semibold">Time:</span>
+                      <span className="text-dark ms-2">
+                        {viewingEmail.sentAt ? new Date(viewingEmail.sentAt).toLocaleString() : 'Recently'}
+                      </span>
+                    </div>
+                    <div className="col-12 col-md-7">
+                      <span className="text-muted fw-semibold">From:</span>
+                      <span className="text-dark ms-2 font-monospace">{viewingEmail.senderEmail}</span>
+                    </div>
+                    <div className="col-12 col-md-5 text-md-end">
+                      <span className="text-muted fw-semibold">To:</span>
+                      <span className="text-dark ms-2 font-monospace">{viewingEmail.recipientEmail}</span>
+                    </div>
+                    <div className="col-12">
+                      <span className="text-muted fw-semibold">Message-ID:</span>
+                      <span className="text-muted font-monospace ms-2" style={{ fontSize: '0.78rem' }}>
+                        &lt;email_{viewingEmail.id}@reachinbox.ai&gt;
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-2">
+                  <span className="form-label text-muted small fw-medium">Message Body:</span>
+                </div>
+                <div
+                  className="p-3 rounded-2 border bg-white text-dark"
+                  style={{ minHeight: '120px', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}
+                >
+                  {viewingEmail.body}
+                </div>
+
+                {viewingEmail.etherealPreviewUrl && (
+                  <div className="mt-3 p-3 bg-light rounded-2 border d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+                    <div className="small text-muted">
+                      <i className="bi bi-info-circle me-1 text-primary"></i>
+                      <span>Ethereal Mailbox Login: <code>a4ct2pxwmslx2pyy@ethereal.email</code> / <code>ku6W3VZdSEmwJRYFZn</code></span>
+                    </div>
+                    <a
+                      href={viewingEmail.etherealPreviewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 flex-shrink-0"
+                    >
+                      <i className="bi bi-box-arrow-up-right"></i>
+                      <span>Open in Ethereal</span>
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              <div className="modal-footer px-4 py-3 bg-light border-top">
+                <button
+                  type="button"
+                  className="btn btn-secondary-custom"
+                  onClick={() => setViewingEmail(null)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

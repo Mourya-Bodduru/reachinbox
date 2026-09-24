@@ -35,24 +35,18 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
       email: 'alex.sales@reachinbox.ai',
       name: 'Alex Johnson (ReachInbox Sales)',
       isDefault: true,
-      createdAt: '',
-      updatedAt: '',
     },
     {
       id: 'default-2',
       email: 'sarah.outreach@outboxlabs.com',
       name: 'Sarah Parker (Outbox Labs Outreach)',
       isDefault: false,
-      createdAt: '',
-      updatedAt: '',
     },
     {
       id: 'default-3',
       email: 'campaigns@growthlead.io',
       name: 'Growth Campaigns Team',
       isDefault: false,
-      createdAt: '',
-      updatedAt: '',
     },
   ];
 
