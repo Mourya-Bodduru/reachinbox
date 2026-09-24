@@ -29,12 +29,41 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const fallbackSenders: Sender[] = [
+    {
+      id: 'default-1',
+      email: 'alex.sales@reachinbox.ai',
+      name: 'Alex Johnson (ReachInbox Sales)',
+      isDefault: true,
+      createdAt: '',
+      updatedAt: '',
+    },
+    {
+      id: 'default-2',
+      email: 'sarah.outreach@outboxlabs.com',
+      name: 'Sarah Parker (Outbox Labs Outreach)',
+      isDefault: false,
+      createdAt: '',
+      updatedAt: '',
+    },
+    {
+      id: 'default-3',
+      email: 'campaigns@growthlead.io',
+      name: 'Growth Campaigns Team',
+      isDefault: false,
+      createdAt: '',
+      updatedAt: '',
+    },
+  ];
+
+  const effectiveSenders = senders && senders.length > 0 ? senders : fallbackSenders;
+
   useEffect(() => {
-    if (senders.length > 0 && !selectedSender) {
-      const defaultSender = senders.find((s) => s.isDefault) || senders[0];
+    if (effectiveSenders.length > 0 && !selectedSender) {
+      const defaultSender = effectiveSenders.find((s) => s.isDefault) || effectiveSenders[0];
       setSelectedSender(defaultSender.email);
     }
-  }, [senders, selectedSender]);
+  }, [effectiveSenders, selectedSender]);
 
   if (!show) return null;
 
@@ -186,8 +215,8 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
                     value={selectedSender}
                     onChange={(e) => setSelectedSender(e.target.value)}
                   >
-                    {senders.map((s) => (
-                      <option key={s.id} value={s.email}>
+                    {effectiveSenders.map((s) => (
+                      <option key={s.id || s.email} value={s.email}>
                         {s.name} ({s.email}) {s.isDefault ? '• Default' : ''}
                       </option>
                     ))}

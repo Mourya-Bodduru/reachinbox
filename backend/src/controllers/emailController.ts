@@ -287,9 +287,42 @@ export async function getEmailStats(req: AuthRequest, res: Response) {
 
 export async function getSenders(req: AuthRequest, res: Response) {
   try {
-    const senders = await prisma.sender.findMany({
+    let senders = await prisma.sender.findMany({
       orderBy: { isDefault: 'desc' },
     });
+
+    if (senders.length === 0) {
+      const initialSenders = [
+        {
+          email: 'alex.sales@reachinbox.ai',
+          name: 'Alex Johnson (ReachInbox Sales)',
+          isDefault: true,
+        },
+        {
+          email: 'sarah.outreach@outboxlabs.com',
+          name: 'Sarah Parker (Outbox Labs Outreach)',
+          isDefault: false,
+        },
+        {
+          email: 'campaigns@growthlead.io',
+          name: 'Growth Campaigns Team',
+          isDefault: false,
+        },
+      ];
+
+      for (const s of initialSenders) {
+        await prisma.sender.upsert({
+          where: { email: s.email },
+          update: s,
+          create: s,
+        });
+      }
+
+      senders = await prisma.sender.findMany({
+        orderBy: { isDefault: 'desc' },
+      });
+    }
+
     return res.json({ senders });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });

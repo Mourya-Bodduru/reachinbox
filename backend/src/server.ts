@@ -75,6 +75,52 @@ async function bootstrap() {
     console.log(`Backend server listening on port ${env.PORT}`);
     console.log(`Queue UI: http://localhost:${env.PORT}/admin/queues`);
 
+    try {
+      const senderCount = await prisma.sender.count();
+      if (senderCount === 0) {
+        console.log('[Init] Seeding default senders...');
+        const initialSenders = [
+          {
+            email: 'alex.sales@reachinbox.ai',
+            name: 'Alex Johnson (ReachInbox Sales)',
+            isDefault: true,
+          },
+          {
+            email: 'sarah.outreach@outboxlabs.com',
+            name: 'Sarah Parker (Outbox Labs Outreach)',
+            isDefault: false,
+          },
+          {
+            email: 'campaigns@growthlead.io',
+            name: 'Growth Campaigns Team',
+            isDefault: false,
+          },
+        ];
+        for (const s of initialSenders) {
+          await prisma.sender.upsert({
+            where: { email: s.email },
+            update: s,
+            create: s,
+          });
+        }
+      }
+
+      const demoUser = await prisma.user.findFirst({
+        where: { email: 'demo@reachinbox.ai' },
+      });
+      if (!demoUser) {
+        await prisma.user.create({
+          data: {
+            email: 'demo@reachinbox.ai',
+            name: 'ReachInbox Demo User',
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+          },
+        });
+      }
+    } catch (err: any) {
+      console.warn('[Init] Auto-seed warning:', err.message);
+    }
+
     await initElasticsearch();
     const worker = createEmailWorker();
     await syncQueueOnStartup();
